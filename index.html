@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700;800&family=Lora+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --c1: #22577a;
+    --c2: #38a3a5;
+    --c3: #57cc99;
+    --c4: #80ed99;
+    --c5: #c7f9cc;
+    --bg: #0e2233;
+    --card: #152e42;
+    --text: #c7f9cc;
+    --text-dim: #57cc99;
+    --text-muted: #38a3a5;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lora', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  /* dot grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(87,204,153,0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+
+  .calc-wrap {
+    position: relative;
+    z-index: 1;
+    width: 320px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .calc-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .calc-body {
+    background: var(--card);
+    border-radius: 24px;
+    border: 1px solid rgba(87,204,153,0.15);
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+
+  /* display */
+  .display {
+    padding: 1.5rem 1.5rem 1rem;
+    background: var(--c1);
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  .display-expr {
+    font-family: 'Lora', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    min-height: 18px;
+    word-break: break-all;
+    text-align: right;
+  }
+
+  .display-main {
+    font-family: 'Lora', monospace;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--c5);
+    line-height: 1.1;
+    word-break: break-all;
+    text-align: right;
+    transition: color 0.15s;
+  }
+
+  .display-main.error { color: #ff6b6b; font-size: 1.4rem; }
+
+  /* buttons grid */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: rgba(87,204,153,0.08);
+    padding: 1px;
+  }
+
+  button.key {
+    font-family: 'Lora', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    padding: 1.1rem 0;
+    transition: background 0.1s, color 0.1s, transform 0.08s;
+    background: var(--card);
+    color: var(--text);
+    border-radius: 0;
+  }
+
+  button.key:active { transform: scale(0.92); }
+
+  /* key variants */
+  button.key.op {
+    background: rgba(56,163,165,0.15);
+    color: var(--c3);
+  }
+  button.key.op:hover { background: rgba(56,163,165,0.28); }
+
+  button.key.action {
+    background: rgba(34,87,122,0.5);
+    color: var(--c4);
+  }
+  button.key.action:hover { background: rgba(34,87,122,0.75); }
+
+  button.key.equals {
+    background: var(--c3);
+    color: var(--bg);
+  }
+  button.key.equals:hover { background: var(--c4); }
+
+  button.key.num:hover { background: rgba(199,249,204,0.07); }
+
+  button.key.zero { grid-column: span 2; }
+
+  /* bottom bar */
+  .calc-footer {
+    padding: 0.6rem 1rem;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: rgba(87,204,153,0.3);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="calc-wrap">
+  <div class="calc-title">Calculator</div>
+  <div class="calc-body">
+    <div class="display">
+      <div class="display-expr" id="expr"></div>
+      <div class="display-main" id="main">0</div>
+    </div>
+
+    <div class="btn-grid">
+      <!-- row 1 -->
+      <button class="key action" data-action="clear">C</button>
+      <button class="key action" data-action="sign">+/−</button>
+      <button class="key action" data-action="percent">%</button>
+      <button class="key op" data-op="/">÷</button>
+      <!-- row 2 -->
+      <button class="key num" data-num="7">7</button>
+      <button class="key num" data-num="8">8</button>
+      <button class="key num" data-num="9">9</button>
+      <button class="key op" data-op="*">×</button>
+      <!-- row 3 -->
+      <button class="key num" data-num="4">4</button>
+      <button class="key num" data-num="5">5</button>
+      <button class="key num" data-num="6">6</button>
+      <button class="key op" data-op="-">−</button>
+      <!-- row 4 -->
+      <button class="key num" data-num="1">1</button>
+      <button class="key num" data-num="2">2</button>
+      <button class="key num" data-num="3">3</button>
+      <button class="key op" data-op="+">+</button>
+      <!-- row 5 -->
+      <button class="key num zero" data-num="0">0</button>
+      <button class="key num" data-num=".">.</button>
+      <button class="key equals" data-action="equals">=</button>
+    </div>
+
+    <div class="calc-footer">v1.0</div>
+  </div>
+</div>
+
+<script>
+  let current = '0';
+  let stored = null;
+  let operator = null;
+  let waitingForOperand = false;
+  let exprStr = '';
+
+  const mainEl = document.getElementById('main');
+  const exprEl = document.getElementById('expr');
+
+  function updateDisplay(val) {
+    mainEl.classList.remove('error');
+    // format large numbers nicely
+    let display = val;
+    if (!isNaN(val) && val !== '' && !val.toString().includes('e')) {
+      const num = parseFloat(val);
+      if (Number.isInteger(num) && Math.abs(num) < 1e15) {
+        display = num.toLocaleString('en-US');
+      } else {
+        display = parseFloat(parseFloat(val).toPrecision(10)).toString();
+      }
+    }
+    mainEl.textContent = display;
+    exprEl.textContent = exprStr;
+  }
+
+  function showError(msg) {
+    mainEl.classList.add('error');
+    mainEl.textContent = msg;
+    exprEl.textContent = '';
+    current = '0';
+    stored = null;
+    operator = null;
+    waitingForOperand = false;
+    exprStr = '';
+  }
+
+  function inputNum(n) {
+    if (waitingForOperand) {
+      current = n === '.' ? '0.' : n;
+      waitingForOperand = false;
+    } else {
+      if (n === '.' && current.includes('.')) return;
+      if (current === '0' && n !== '.') current = n;
+      else current += n;
+    }
+    updateDisplay(current);
+  }
+
+  function inputOp(op) {
+    const val = parseFloat(current);
+    if (stored !== null && !waitingForOperand) {
+      const result = calculate(stored, val, operator);
+      if (result === null) return;
+      current = String(result);
+      stored = result;
+    } else {
+      stored = val;
+    }
+    operator = op;
+    waitingForOperand = true;
+    const opSymbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    exprStr = `${parseFloat(stored).toLocaleString('en-US')} ${opSymbols[op]}`;
+    updateDisplay(current);
+  }
+
+  function calculate(a, b, op) {
+    let result;
+    switch (op) {
+      case '+': result = a + b; break;
+      case '-': result = a - b; break;
+      case '*': result = a * b; break;
+      case '/':
+        if (b === 0) { showError('Cannot divide by 0'); return null; }
+        result = a / b;
+        break;
+      default: return b;
+    }
+    return parseFloat(result.toPrecision(12));
+  }
+
+  function doEquals() {
+    if (operator === null || stored === null) return;
+    const val = parseFloat(current);
+    const opSymbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    exprStr = `${parseFloat(stored).toLocaleString('en-US')} ${opSymbols[operator]} ${val.toLocaleString('en-US')} =`;
+    const result = calculate(stored, val, operator);
+    if (result === null) return;
+    current = String(result);
+    stored = null;
+    operator = null;
+    waitingForOperand = true;
+    updateDisplay(current);
+  }
+
+  document.querySelector('.btn-grid').addEventListener('click', e => {
+    const key = e.target.closest('button.key');
+    if (!key) return;
+
+    if (key.dataset.num !== undefined) {
+      inputNum(key.dataset.num);
+    } else if (key.dataset.op) {
+      inputOp(key.dataset.op);
+    } else if (key.dataset.action) {
+      switch (key.dataset.action) {
+        case 'clear':
+          current = '0'; stored = null; operator = null;
+          waitingForOperand = false; exprStr = '';
+          updateDisplay('0');
+          break;
+        case 'sign':
+          current = String(parseFloat(current) * -1);
+          updateDisplay(current);
+          break;
+        case 'percent':
+          current = String(parseFloat(current) / 100);
+          updateDisplay(current);
+          break;
+        case 'equals':
+          doEquals();
+          break;
+      }
+    }
+  });
+
+  // keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+    else if (e.key === '.') inputNum('.');
+    else if (['+', '-', '*', '/'].includes(e.key)) inputOp(e.key);
+    else if (e.key === 'Enter' || e.key === '=') doEquals();
+    else if (e.key === 'Escape') {
+      current = '0'; stored = null; operator = null;
+      waitingForOperand = false; exprStr = '';
+      updateDisplay('0');
+    } else if (e.key === 'Backspace') {
+      if (current.length > 1) current = current.slice(0, -1);
+      else current = '0';
+      updateDisplay(current);
+    }
+  });
+
+  updateDisplay('0');
+</script>
+</body>
+</html>
